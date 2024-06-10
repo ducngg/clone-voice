@@ -22,6 +22,8 @@ from dotenv import load_dotenv
 from waitress import serve
 load_dotenv()
 
+from pyngrok import ngrok
+
 web_address = os.getenv('WEB_ADDRESS', '127.0.0.1:9988')
 
 
@@ -440,9 +442,22 @@ if __name__ == '__main__':
         print(langlist['lang7'])
         http_server = None
         try:
-            host = web_address.split(':')
-            threading.Thread(target=openweb, args=(web_address,)).start()
-            serve(app,host=host[0], port=int(host[1]))
+            
+            ngrok_config = {
+                "addr": "5000",
+            }
+            public_url = ngrok.connect(**ngrok_config)
+            print(' * Tunnel URL:', public_url)
+
+            url_pattern = r'"(https?://[^"]+)"'
+            matches = re.findall(url_pattern, str(public_url))
+            public_link = matches[0]
+
+            print(f"Endpoint: {public_link}/recommend")
+            app.run(host='0.0.0.0', port=5000)
+            # host = web_address.split(':')
+            # threading.Thread(target=openweb, args=(web_address,)).start()
+            # serve(app,host=host[0], port=int(host[1]))
         finally:
            print('exit')
     except Exception as e:
